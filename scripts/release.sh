@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Build, codesign (Developer ID), and notarize FastRepo.
+# Build, codesign (Developer ID), notarize, and staple FastRepo.app.
 # One-time setup (keeps the app-specific password out of scripts/chat):
 #   xcrun notarytool store-credentials fastrepo-notary \
-#     --apple-id "<your apple id>" --team-id VP9U3RSL2K --password "<app-specific password>"
+#     --apple-id "<your apple id>" --team-id VP9U3RSL2K
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -16,14 +16,23 @@ swift build -c release
 
 echo "==> assemble ${BUNDLE}"
 rm -rf dist
-mkdir -p "${BUNDLE}/Contents/MacOS" "${BUNDLE}/Contents/Resources"
+mkdir -p "${BUNDLE}/Contents/MacOS" "${BUNDLE}/Contents/Resources" "${BUNDLE}/Contents/Frameworks"
 cp ".build/release/${APP_NAME}" "${BUNDLE}/Contents/MacOS/${APP_NAME}"
 cp scripts/Info.plist "${BUNDLE}/Contents/Info.plist"
 cp Resources/AppIcon.icns "${BUNDLE}/Contents/Resources/AppIcon.icns"
 cp Resources/MenuIcon.png "${BUNDLE}/Contents/Resources/MenuIcon.png"
+cp -R ".build/release/Sparkle.framework" "${BUNDLE}/Contents/Frameworks/"
+install_name_tool -add_rpath "@executable_path/../Frameworks" "${BUNDLE}/Contents/MacOS/${APP_NAME}" 2>/dev/null || true
 
-echo "==> codesign (hardened runtime + timestamp)"
-codesign --force --options runtime --timestamp --sign "${SIGN_ID}" "${BUNDLE}"
+echo "==> codesign (inside-out, hardened runtime)"
+sign() { codesign --force --options runtime --timestamp --sign "${SIGN_ID}" "$@"; }
+FW="${BUNDLE}/Contents/Frameworks/Sparkle.framework"
+# Sparkle's nested helpers must be signed before the framework and the app.
+while IFS= read -r -d '' x; do sign "$x"; done < <(find "${FW}" -name "*.xpc" -print0)
+[ -e "${FW}/Versions/B/Updater.app" ] && sign "${FW}/Versions/B/Updater.app"
+[ -e "${FW}/Versions/B/Autoupdate" ] && sign "${FW}/Versions/B/Autoupdate"
+sign "${FW}"
+sign "${BUNDLE}"
 codesign --verify --strict --verbose=2 "${BUNDLE}"
 
 echo "==> notarize"
@@ -32,12 +41,8 @@ ditto -c -k --keepParent "${BUNDLE}" "${ZIP}"
 xcrun notarytool submit "${ZIP}" --keychain-profile "${NOTARY_PROFILE}" --wait
 xcrun stapler staple "${BUNDLE}"
 xcrun stapler validate "${BUNDLE}"
-
-# Re-zip the stapled app for distribution / Sparkle.
-rm -f "${ZIP}"
-ditto -c -k --keepParent "${BUNDLE}" "${ZIP}"
+rm -f "${ZIP}"; ditto -c -k --keepParent "${BUNDLE}" "${ZIP}"
 
 echo "==> done"
 echo "Signed + notarized + stapled: ${BUNDLE}"
-echo "Distributable archive:        ${ZIP}"
-# TODO (auto-update): sign ${ZIP} with Sparkle's EdDSA key, append to appcast.xml, publish feed.
+echo "Archive (feed to publish.sh): ${ZIP}"

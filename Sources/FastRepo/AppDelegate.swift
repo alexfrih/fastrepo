@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import Carbon.HIToolbox
+import Sparkle
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -12,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotKey: GlobalHotKey?
     private var refreshTimer: Timer?
     private let tokenPageURL = "https://github.com/settings/tokens/new?scopes=repo,read:org&description=FastRepo"
+    private let updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Use our icon for system UI (alerts etc.); reliable even with LSUIElement.
@@ -85,6 +87,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let clearItem = NSMenuItem(title: "Clear token", action: #selector(clearTokenClicked), keyEquivalent: "")
         clearItem.target = self
         menu.addItem(clearItem)
+
+        menu.addItem(.separator())
+        let updatesItem = NSMenuItem(title: "Check for Updates…",
+                                     action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)),
+                                     keyEquivalent: "")
+        updatesItem.target = updaterController
+        menu.addItem(updatesItem)
 
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit FastRepo", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))

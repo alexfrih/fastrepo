@@ -36,7 +36,17 @@ scripts/release.sh  # build + codesign (Developer ID) + notarize + staple
 
 ## Auto-update
 
-FastRepo updates itself via [Sparkle](https://sparkle-project.org): it checks the update feed in the background and installs new versions in place. No manual re-download when a bug is fixed. You can also trigger it from the menu (**Check for Updates…**).
+FastRepo updates itself via [Sparkle](https://sparkle-project.org): it checks the update feed in the background and installs new versions in place. No manual re-download when a bug is fixed. You can also trigger it from the menu (**Check for Updates…**). Feed: `https://alexfrih.github.io/fastrepo/appcast.xml`.
+
+### Releasing (maintainer)
+
+```bash
+# one-time: store notarization creds in the keychain
+xcrun notarytool store-credentials fastrepo-notary --apple-id "<id>" --team-id VP9U3RSL2K
+
+scripts/release.sh         # build + sign (Developer ID) + notarize + staple
+scripts/publish.sh 0.1.0   # GitHub Release + EdDSA-signed appcast + push feed
+```
 
 ## Project layout
 
