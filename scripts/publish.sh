@@ -20,8 +20,11 @@ gh release create "${TAG}" "${ZIP}" --repo "${REPO}" --title "${APP_NAME} ${VERS
   || gh release upload "${TAG}" "${ZIP}" --repo "${REPO}" --clobber
 
 echo "==> generate EdDSA-signed appcast"
-mkdir -p docs
-"${GEN}" --download-url-prefix "https://github.com/${REPO}/releases/download/${TAG}/" -o docs/appcast.xml dist
+# Isolate the zip: dist/ now also holds the website .dmg (release.sh), and
+# generate_appcast scans a whole directory — only the Sparkle .zip belongs here.
+mkdir -p docs dist/sparkle
+cp "${ZIP}" dist/sparkle/
+"${GEN}" --download-url-prefix "https://github.com/${REPO}/releases/download/${TAG}/" -o docs/appcast.xml dist/sparkle
 
 echo "==> publish feed (GitHub Pages)"
 git add docs/appcast.xml
