@@ -19,7 +19,7 @@ GitHub scatters the repos you're a collaborator on across orgs and users, with n
 FastRepo needs a classic GitHub **personal access token** with `repo` + `read:org`:
 https://github.com/settings/tokens/new?scopes=repo,read:org&description=FastRepo
 
-It's stored only in your **login Keychain** (service `com.solarbeam.FastRepo`), never on disk in plaintext, and sent only to `api.github.com`. If an org uses SAML SSO, authorize the token for it.
+It's stored only in your **login Keychain** (service `studio.solarbeam.fastrepo`), never on disk in plaintext, and sent only to `api.github.com`. If an org uses SAML SSO, authorize the token for it.
 
 ## Install
 

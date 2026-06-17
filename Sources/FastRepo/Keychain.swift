@@ -3,7 +3,7 @@ import Security
 
 // Stores the GitHub PAT in the login Keychain (never plaintext on disk).
 enum Keychain {
-    private static let service = "com.solarbeam.FastRepo"
+    private static let service = "studio.solarbeam.fastrepo"
     private static let account = "github-token"
 
     static func set(_ token: String) {

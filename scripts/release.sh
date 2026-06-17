@@ -9,7 +9,7 @@ cd "$(dirname "$0")/.."
 APP_NAME="FastRepo"
 BUNDLE="dist/${APP_NAME}.app"
 SIGN_ID="${SIGN_ID:-Developer ID Application: Solar Beam (VP9U3RSL2K)}"
-NOTARY_PROFILE="${NOTARY_PROFILE:-fastrepo-notary}"
+NOTARY_PROFILE="${NOTARY_PROFILE:-solarbeam-notary}"
 
 echo "==> build"
 swift build -c release
